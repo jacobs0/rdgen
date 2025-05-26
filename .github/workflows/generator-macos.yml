@@ -643,8 +643,8 @@ jobs:
             ls -la "${{ inputs.appname }}.app" || echo "App not found"
             ls -la "${{ inputs.appname }}.app/Contents" || echo "Contents not found"
             
-            # Decode the certificate
-            echo "${{ secrets.MACOS_P12_BASE64 }}" | base64 --decode > certificate.p12
+            
+            
             
             # Sign the app bundle and its contents
             if [ -d "${{ inputs.appname }}.app/Contents/MacOS" ]; then
@@ -677,7 +677,7 @@ jobs:
           else
               echo "Error: Invalid app bundle structure"
               exit 1
-            fi
+          fi
       - name: Sign macOS app bundle (with certificate)
         if: env.MACOS_P12_BASE64 != ''
         run: |
