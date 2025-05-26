@@ -625,6 +625,60 @@ jobs:
           data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
 
       - name: Sign macOS app bundle
+        if: env.MACOS_P12_BASE64 == '-'
+        run: |
+            cd flutter/build/macos/Build/Products/Release
+            # Debug info
+            echo "Current directory contents:"
+            ls -la
+            
+            # Rename RustDesk.app to the custom app name first
+            if [ -d "RustDesk.app" ]; then
+              # First rename the app if it's still called RustDesk.app
+              mv "RustDesk.app" "${{ inputs.appname }}.app"
+              echo "Renamed RustDesk.app to ${{ inputs.appname }}.app"
+            fi
+            
+            echo "App bundle contents after rename:"
+            ls -la "${{ inputs.appname }}.app" || echo "App not found"
+            ls -la "${{ inputs.appname }}.app/Contents" || echo "Contents not found"
+            
+            # Decode the certificate
+            echo "${{ secrets.MACOS_P12_BASE64 }}" | base64 --decode > certificate.p12
+            
+            # Sign the app bundle and its contents
+            if [ -d "${{ inputs.appname }}.app/Contents/MacOS" ]; then
+              echo "Signing main executable..."
+              MAIN_EXECUTABLE="${{ inputs.appname }}.app/Contents/MacOS/${{ inputs.appname }}"
+              if [ -f "$MAIN_EXECUTABLE" ]; then
+                rcodesign sign \
+                  --code-signature-flags runtime "$MAIN_EXECUTABLE"
+              else
+                echo "Main executable not found at expected path: $MAIN_EXECUTABLE"
+                # Try to find the actual executable
+                echo "Available executables in MacOS directory:"
+                ls -la "${{ inputs.appname }}.app/Contents/MacOS/"
+                ACTUAL_EXECUTABLE=$(ls "${{ inputs.appname }}.app/Contents/MacOS/" | head -n 1)
+                if [ -n "$ACTUAL_EXECUTABLE" ]; then
+                  echo "Found executable: $ACTUAL_EXECUTABLE"
+                  rcodesign sign \
+                    --code-signature-flags runtime "${{ inputs.appname }}.app/Contents/MacOS/$ACTUAL_EXECUTABLE"
+                fi
+              fi
+              
+              echo "Signing frameworks..."
+              find "${{ inputs.appname }}.app/Contents/Frameworks" -type f -not -name ".*" -exec \
+                rcodesign sign \
+                --code-signature-flags runtime {} \;
+              
+              echo "Signing main bundle..."
+              rcodesign sign \
+                --code-signature-flags runtime "${{ inputs.appname }}.app"
+          else
+              echo "Error: Invalid app bundle structure"
+              exit 1
+            fi
+      - name: Sign macOS app bundle (with certificate)
         if: env.MACOS_P12_BASE64 != ''
         run: |
             cd flutter/build/macos/Build/Products/Release
