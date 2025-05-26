@@ -674,10 +674,10 @@ jobs:
               echo "Signing main bundle..."
               rcodesign sign \
                 --code-signature-flags runtime "${{ inputs.appname }}.app"
-          else
+             else
               echo "Error: Invalid app bundle structure"
               exit 1
-          fi
+             fi
       - name: Sign macOS app bundle (with certificate)
         if: env.MACOS_P12_BASE64 != ''
         run: |
