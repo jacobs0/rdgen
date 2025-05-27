@@ -665,11 +665,14 @@ jobs:
                     --code-signature-flags runtime "${{ inputs.appname }}.app/Contents/MacOS/$ACTUAL_EXECUTABLE"
                 fi
               fi
+
+              echo "unSigning frameworks..."
+              find "${{ inputs.appname }}.app/Contents/Frameworks" -type f -not -name ".*" -exec \
+                codesign --remove-signature {} \;
               
               echo "Signing frameworks..."
               find "${{ inputs.appname }}.app/Contents/Frameworks" -type f -not -name ".*" -exec \
-                rcodesign sign \
-                --code-signature-flags runtime {} \;
+                rcodesign sign --code-signature-flags runtime {} \;
               
               echo "Signing main bundle..."
               rcodesign sign \
