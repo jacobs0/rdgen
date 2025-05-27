@@ -625,7 +625,7 @@ jobs:
           data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
 
       - name: Sign macOS app bundle
-        if: env.MACOS_P12_BASE64 == '-'
+        if: env.MACOS_P12_BASE64 == ''
         run: |
             cd flutter/build/macos/Build/Products/Release
             # Debug info
@@ -679,7 +679,7 @@ jobs:
               exit 1
              fi
       - name: Sign macOS app bundle (with certificate)
-        if: env.MACOS_P12_BASE64 != '-'
+        if: env.MACOS_P12_BASE64 != ''
         run: |
             cd flutter/build/macos/Build/Products/Release
             # Debug info
